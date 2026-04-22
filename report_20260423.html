@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TradingAgents 分析ダッシュボード | 硫黄・硫酸テーマ</title>
+<meta name="analysis-date" content="2026-04-23">
+<meta name="theme-title" content="技術トレンド・成長期待銘柄（AI/量子/宇宙/ロボティクス）">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #f1f5f9; --card: #ffffff; --text: #1e293b;
+    --sub: #64748b; --border: #e2e8f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Hiragino Sans", "Meiryo", system-ui, sans-serif;
+          background: var(--bg); color: var(--text); font-size: 14px; }
+  a { color: #3b82f6; }
+
+  /* ヘッダー */
+  .header { background: linear-gradient(135deg,#1e3a5f,#2d6a9f);
+             color:#fff; padding:32px 40px; }
+  .header h1 { font-size:24px; font-weight:700; margin-bottom:8px; }
+  .header .meta { font-size:13px; opacity:.8; display:flex; gap:20px; flex-wrap:wrap; }
+  .header .meta span { background:rgba(255,255,255,.15); padding:3px 10px; border-radius:20px; }
+
+  /* コンテナ */
+  .container { max-width:1200px; margin:0 auto; padding:24px 20px; }
+
+  /* サマリーカード */
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+                   gap:12px; margin-bottom:28px; }
+  .summary-card { background:var(--card); border-radius:12px; padding:16px;
+                   text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .summary-card .num { font-size:32px; font-weight:700; }
+  .summary-card .lbl { font-size:12px; color:var(--sub); margin-top:4px; }
+
+  /* チャートエリア */
+  .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px; }
+  @media(max-width:768px) { .charts-grid { grid-template-columns:1fr; } }
+  .chart-card { background:var(--card); border-radius:12px; padding:20px;
+                 box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .chart-card h2 { font-size:15px; font-weight:600; margin-bottom:16px; color:var(--sub); }
+
+  /* テーマ説明 */
+  .theme-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px;
+                padding:20px 24px; margin-bottom:28px; }
+  .theme-box h2 { font-size:16px; color:#1d4ed8; margin-bottom:10px; }
+  .theme-box p { color:#1e40af; line-height:1.7; font-size:13px; }
+  .chain { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .chain-item { background:#dbeafe; color:#1e40af; padding:5px 12px;
+                 border-radius:20px; font-size:12px; font-weight:600; }
+  .chain-arrow { color:#3b82f6; font-size:16px; }
+
+  /* 銘柄カード */
+  .section-title { font-size:18px; font-weight:700; margin-bottom:16px;
+                    display:flex; align-items:center; gap:8px; }
+  .stock-card { background:var(--card); border-radius:12px; margin-bottom:16px;
+                 box-shadow:0 1px 3px rgba(0,0,0,.08); overflow:hidden; }
+  .card-header { display:flex; justify-content:space-between; align-items:flex-start;
+                  padding:20px 24px; gap:16px; }
+  .card-title h3 { font-size:17px; font-weight:700; margin:6px 0 4px; }
+  .ticker-tag { font-size:13px; color:var(--sub); font-weight:400; }
+  .market-badge { font-size:11px; background:#f1f5f9; color:var(--sub);
+                   padding:2px 8px; border-radius:20px; }
+  .thesis { font-size:12px; color:var(--sub); margin-top:4px; }
+  .rating-badge { color:#fff; padding:8px 16px; border-radius:8px;
+                   font-size:14px; font-weight:700; white-space:nowrap; }
+
+  /* アコーディオン */
+  .accordion-item { border-top:1px solid var(--border); }
+  .accordion-btn { width:100%; background:none; border:none; cursor:pointer;
+                    padding:12px 24px; display:flex; justify-content:space-between;
+                    align-items:center; font-size:13px; font-weight:600;
+                    color:var(--sub); text-align:left; transition:.2s; }
+  .accordion-btn:hover { background:#f8fafc; color:var(--text); }
+  .acc-arrow { transition:transform .2s; font-size:11px; }
+  .accordion-body { display:none; padding:0 24px 20px; }
+  .accordion-body.open { display:block; }
+  .report-content { font-size:13px; line-height:1.8; color:#334155; }
+  .report-content h2,.report-content h3,.report-content h4 {
+    margin:16px 0 6px; font-size:14px; color:#1e293b; }
+  .report-content p { margin-bottom:8px; }
+  .report-content li { margin-left:20px; margin-bottom:4px; }
+  .report-content strong { color:#1e293b; }
+  .report-content .table-wrap { overflow-x:auto; margin:12px 0; }
+  .report-content table { border-collapse:collapse; width:100%; font-size:12px; }
+  .report-content th,.report-content td {
+    border:1px solid var(--border); padding:6px 10px; text-align:left; }
+  .report-content th { background:#f8fafc; font-weight:600; }
+
+  /* フッター */
+  .footer { text-align:center; color:var(--sub); font-size:12px;
+             padding:32px 20px; margin-top:20px; border-top:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚗️ TradingAgents 分析ダッシュボード</h1>
+  <div class="meta">
+    <span>📅 分析日: 2026-04-23</span>
+    <span>🤖 モデル: claude-opus-4-6 (deep) / claude-haiku-4-5 (quick)</span>
+    <span>📊 対象銘柄: 8銘柄</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- テーマ説明 -->
+  <div class="theme-box">
+    <h2>📌 投資テーマ：イスラエル・イラン紛争 → 硫黄・硫酸サプライチェーン恩恵銘柄</h2>
+    <div class="chain">
+      <span class="chain-item">中東紛争激化</span><span class="chain-arrow">→</span>
+      <span class="chain-item">ホルムズ海峡リスク</span><span class="chain-arrow">→</span>
+      <span class="chain-item">中東産硫黄の供給逼迫</span><span class="chain-arrow">→</span>
+      <span class="chain-item">硫黄・硫酸価格急騰</span><span class="chain-arrow">→</span>
+      <span class="chain-item">生産側に利益押し上げ</span>
+    </div>
+    <p style="margin-top:12px">
+      硫黄・硫酸を<strong>副産物として売る側</strong>（非鉄製錬、石油精製）は本業コストほぼ不変のまま販売価格が上昇。
+      一方、硫酸を<strong>原料として大量消費する側</strong>（肥料メーカー等）はコスト増でマージン圧縮リスク。
+    </p>
+  </div>
+
+  <!-- サマリー -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="num" style="color:#22c55e">1</div>
+      <div class="lbl">🟢 BUY</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:#94a3b8">1</div>
+      <div class="lbl">⚪ HOLD</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:#f97316">2</div>
+      <div class="lbl">🟠 UNDERWEIGHT</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:#ef4444">4</div>
+      <div class="lbl">🔴 SELL</div>
+    </div>
+    <div class="summary-card">
+      <div class="num" style="color:#1e3a5f">8</div>
+      <div class="lbl">総分析銘柄数</div>
+    </div>
+  </div>
+
+  <!-- チャート -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2>📊 評価スコア比較（高いほど強気）</h2>
+      <div id="bar-chart" style="height:340px"></div>
+    </div>
+    <div class="chart-card">
+      <h2>🥧 評価分布</h2>
+      <div id="pie-chart" style="height:340px"></div>
+    </div>
+  </div>
+
+  <!-- 銘柄カード -->
+  <div class="section-title">🏢 銘柄別詳細分析</div>
+  
+    <div class="stock-card" style="border-left:4px solid #22c55e; background:#f0fdf4">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇺🇸 米国株</span>
+          <h3>Suncor Energy <span class="ticker-tag">SU</span></h3>
+          <p class="thesis">💡 オイルサンドから年間80万トン超の硫黄生産</p>
+        </div>
+        <div class="rating-badge" style="background:#16a34a">🟢 BUY</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #94a3b8; background:#f8fafc">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇺🇸 米国株</span>
+          <h3>Ecovyst <span class="ticker-tag">ECVT</span></h3>
+          <p class="thesis">💡 硫酸リサイクル・再生専業</p>
+        </div>
+        <div class="rating-badge" style="background:#64748b">⚪ HOLD</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #f97316; background:#fff7ed">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇯🇵 日本株</span>
+          <h3>南海化学 <span class="ticker-tag">4040.T</span></h3>
+          <p class="thesis">💡 廃硫酸リサイクル専業。供給逼迫時に代替供給源</p>
+        </div>
+        <div class="rating-badge" style="background:#ea580c">🟠 UNDERWEIGHT</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #f97316; background:#fff7ed">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇯🇵 日本株</span>
+          <h3>ENEOS HD <span class="ticker-tag">5020.T</span></h3>
+          <p class="thesis">💡 国内最大硫黄生産者（原油脱硫副産物）</p>
+        </div>
+        <div class="rating-badge" style="background:#ea580c">🟠 UNDERWEIGHT</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #ef4444; background:#fef2f2">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇯🇵 日本株</span>
+          <h3>住友商事 <span class="ticker-tag">8053.T</span></h3>
+          <p class="thesis">💡 Interacid社（世界最大硫酸海上貿易）</p>
+        </div>
+        <div class="rating-badge" style="background:#dc2626">🔴 SELL</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #ef4444; background:#fef2f2">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇯🇵 日本株</span>
+          <h3>三菱マテリアル <span class="ticker-tag">5711.T</span></h3>
+          <p class="thesis">💡 銅製錬副産物。硫酸価格上昇で+57億円実績</p>
+        </div>
+        <div class="rating-badge" style="background:#dc2626">🔴 SELL</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #ef4444; background:#fef2f2">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇯🇵 日本株</span>
+          <h3>住友金属鉱山 <span class="ticker-tag">5713.T</span></h3>
+          <p class="thesis">💡 銅・ニッケル製錬の副産物として硫酸を大量生産</p>
+        </div>
+        <div class="rating-badge" style="background:#dc2626">🔴 SELL</div>
+      </div>
+      
+    </div>
+    <div class="stock-card" style="border-left:4px solid #ef4444; background:#fef2f2">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="market-badge">🇯🇵 日本株</span>
+          <h3>三井金属鉱業 <span class="ticker-tag">5706.T</span></h3>
+          <p class="thesis">💡 亜鉛・銅製錬で硫酸副産</p>
+        </div>
+        <div class="rating-badge" style="background:#dc2626">🔴 SELL</div>
+      </div>
+      
+    </div>
+
+  <div class="footer">
+    本レポートは TradingAgents (TauricResearch) による自動分析です。投資判断は自己責任でお願いします。<br>
+    Generated: 2026-04-23 | Model: claude-opus-4-6
+  </div>
+</div>
+
+<script>
+// ── 棒グラフ ──
+Plotly.newPlot('bar-chart', [{
+  type: 'bar', orientation: 'h',
+  y: ["Suncor Energy (SU)", "Ecovyst (ECVT)", "南海化学 (4040.T)", "ENEOS HD (5020.T)", "住友商事 (8053.T)", "三菱マテリアル (5711.T)", "住友金属鉱山 (5713.T)", "三井金属鉱業 (5706.T)"],
+  x: [5, 3, 2, 2, 1, 1, 1, 1],
+  marker: { color: ["#22c55e", "#94a3b8", "#f97316", "#f97316", "#ef4444", "#ef4444", "#ef4444", "#ef4444"] },
+  text: ["\ud83d\udfe2 BUY", "\u26aa HOLD", "\ud83d\udfe0 UNDERWEIGHT", "\ud83d\udfe0 UNDERWEIGHT", "\ud83d\udd34 SELL", "\ud83d\udd34 SELL", "\ud83d\udd34 SELL", "\ud83d\udd34 SELL"],
+  textposition: 'outside',
+  hovertemplate: '<b>%{y}</b><br>評価: %{text}<extra></extra>'
+}], {
+  margin: {l:150, r:80, t:10, b:40},
+  xaxis: { range:[0,6], tickvals:[1,2,3,4,5],
+            ticktext:['SELL','UNDER','HOLD','OVER','BUY'], gridcolor:'#f1f5f9' },
+  yaxis: { autorange:'reversed' },
+  plot_bgcolor:'#ffffff', paper_bgcolor:'#ffffff',
+  font: { family:'Hiragino Sans, Meiryo, sans-serif', size:12 }
+}, {responsive:true, displayModeBar:false});
+
+// ── 円グラフ ──
+Plotly.newPlot('pie-chart', [{
+  type: 'pie',
+  labels: ['🟢 BUY','⚪ HOLD','🟠 UNDERWEIGHT','🔴 SELL'],
+  values: [1, 1, 2, 4],
+  marker: { colors: ['#22c55e','#94a3b8','#f97316','#ef4444'] },
+  textinfo: 'label+percent',
+  hovertemplate: '<b>%{label}</b><br>%{value}銘柄<extra></extra>',
+  hole: 0.35
+}], {
+  margin: {l:20, r:20, t:20, b:20},
+  showlegend: false,
+  plot_bgcolor:'#ffffff', paper_bgcolor:'#ffffff',
+  font: { family:'Hiragino Sans, Meiryo, sans-serif', size:12 }
+}, {responsive:true, displayModeBar:false});
+
+// ── アコーディオン ──
+function toggleAcc(btn) {
+  const body = btn.nextElementSibling;
+  const arrow = btn.querySelector('.acc-arrow');
+  const open = body.classList.toggle('open');
+  arrow.style.transform = open ? 'rotate(180deg)' : '';
+}
+</script>
+</body>
+</html>
